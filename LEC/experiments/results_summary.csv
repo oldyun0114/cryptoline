@@ -1,0 +1,6 @@
+target,file1,file2,trials,program1_variables,program2_variables,candidate_pairs,runtime_real
+Keccak,examples/openssl/keccak/KeccakP-1600-reference_KeccakP1600_Permute_24rounds.cl,examples/openssl/keccak/cc/KeccakF1600.cl,1,396,180,336,0.15-0.18s
+Keccak,examples/openssl/keccak/KeccakP-1600-reference_KeccakP1600_Permute_24rounds.cl,examples/openssl/keccak/cc/KeccakF1600.cl,10,396,180,309,0.87-0.97s
+Keccak,examples/openssl/keccak/KeccakP-1600-reference_KeccakP1600_Permute_24rounds.cl,examples/openssl/keccak/cc/KeccakF1600.cl,100,396,180,309,7.89-9.10s
+SHA-256,examples/openssl/sha256/sha256_block_data_order-aarch64.cl,examples/openssl/sha256/armv4/sha256_block_data_order.cl,1,284,263,257,0.15s
+SHA-256,examples/openssl/sha256/sha256_block_data_order-aarch64.cl,examples/openssl/sha256/armv4/sha256_block_data_order.cl,10,284,263,228,0.41s

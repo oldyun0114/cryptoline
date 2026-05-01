@@ -1,6 +1,6 @@
 (library
-  (name        main)
-  (preprocess  (pps lwt_ppx))
-  (libraries   str utils ast parsers typecheck options qfbv verify nBits sim aig)
-  (flags       (:standard -w -3))
+ (name main)
+ (preprocess (pps lwt_ppx))
+ (libraries str utils ast parsers typecheck options qfbv verify nBits sim aig lec)
+ (flags (:standard -w -3))
 )

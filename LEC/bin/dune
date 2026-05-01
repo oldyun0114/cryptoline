@@ -1,0 +1,3 @@
+(executable
+ (name lec_discover)
+ (libraries lec main))

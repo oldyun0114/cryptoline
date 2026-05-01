@@ -35,6 +35,10 @@ let abc_preprocess_cmd = "strash; rewrite -l; balance -l; rewrite -l; refactor -
 
 let kissat_path = ref "kissat"
 
+let lec_discover = ref false
+let lec_trials = ref 100
+let lec_out_csv = ref None
+
 
 (** Parsing arguments *)
 
@@ -77,8 +81,26 @@ let args_spec =
                            "programs. Output variables may be grouped using \"#\". For example,";
                            "\"a,b#c,d#e,f\" has three groups \"a,b\", \"c,d\", and \"e,f\". Checking";
                            "the equivalence w.r.t. one group is done at a time. "]))
-    ]
-    @Common.args_parsing@Common.args_io
+    
+; ("-lec-discover",
+   Set lec_discover,
+   Common.mk_arg_desc([
+     "";
+     "Run LEC random simulation candidate discovery instead of formal CEC."
+   ]))
+; ("-lec-trials",
+   Int (fun n -> lec_trials := n),
+   Common.mk_arg_desc([
+     "N";
+     "Number of random inputs for -lec-discover."
+   ]))
+; ("-lec-out",
+   String (fun str -> lec_out_csv := Some str),
+   Common.mk_arg_desc([
+     "FILE";
+     "Write candidate equal variable pairs to CSV."
+   ]))
+] @Common.args_parsing@Common.args_io
 let args_spec = List.sort Stdlib.compare args_spec
 
 let usage_msg =
@@ -454,5 +476,19 @@ let check_equivalence_file file1 file2 =
 let run () =
   let _ = Arg.parse args_spec anon_fun usage_msg in
   match List.rev !input_files_rev with
-  | file1::file2::[] -> check_equivalence_file file1 file2
+  | file1::file2::[] ->
+      if !lec_discover then
+        let ((inputs1, _outputs1), spec1) = Common.parse_and_check file1 in
+        let ((inputs2, _outputs2), spec2) = Common.parse_and_check file2 in
+        Lec.Random_discovery.run_programs
+          ~trials:!lec_trials
+          ~out_csv:!lec_out_csv
+          ~file1
+          ~inputs1
+          ~spec1
+          ~file2
+          ~inputs2
+          ~spec2
+      else
+        check_equivalence_file file1 file2
   | _ -> Arg.usage args_spec usage_msg

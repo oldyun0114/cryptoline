@@ -1,0 +1,5 @@
+(library
+ (name lec)
+ (modules hash_signature random_discovery)
+ (libraries str utils ast parsers typecheck options nBits sim zarith)
+ (flags (:standard -w -3-33-37 -warn-error -33)))
