@@ -1,0 +1,2 @@
+case,exit_status,candidate_pairs,filtered_candidate_pairs,random_input_changed,error_hint
+self_add,,88,55,true,

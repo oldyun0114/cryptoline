@@ -16,3 +16,7 @@ _build
 doc/*.aux
 doc/*.dvi
 cryptoline.opam
+LEC/experiments/results/
+*.bak
+*.before_*
+_build/

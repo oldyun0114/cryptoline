@@ -1,0 +1,7 @@
+case_file,filtered_pairs,signature_groups,one_to_one_groups,one_to_one_pairs,ambiguous_groups,ambiguous_pairs,max_group_pairs,max_group_left,max_group_right,grouped_output
+keccak_ref_cc_trials1000_filtered.csv,254,61,34,34,27,220,12,4,3,LEC/experiments/results/trials_filtered_short/keccak_ref_cc_trials1000_filtered_quality_groups.csv
+sha256_aarch64_armv4_trials1000_filtered.csv,84,20,12,12,8,72,9,3,3,LEC/experiments/results/trials_filtered_short/sha256_aarch64_armv4_trials1000_filtered_quality_groups.csv
+x25519_fe64_add_armv8_x86_trials1000_filtered.csv,47,12,5,5,7,42,9,3,3,LEC/experiments/results/trials_filtered_short/x25519_fe64_add_armv8_x86_trials1000_filtered_quality_groups.csv
+x25519_fe64_mul_armv8_x86_trials1000_filtered.csv,57,17,5,5,12,52,9,3,3,LEC/experiments/results/trials_filtered_short/x25519_fe64_mul_armv8_x86_trials1000_filtered_quality_groups.csv
+x25519_fe64_sqr_armv8_x86_trials1000_filtered.csv,49,13,5,5,8,44,9,3,3,LEC/experiments/results/trials_filtered_short/x25519_fe64_sqr_armv8_x86_trials1000_filtered_quality_groups.csv
+x25519_fe64_sub_armv8_x86_trials1000_filtered.csv,47,12,5,5,7,42,9,3,3,LEC/experiments/results/trials_filtered_short/x25519_fe64_sub_armv8_x86_trials1000_filtered_quality_groups.csv

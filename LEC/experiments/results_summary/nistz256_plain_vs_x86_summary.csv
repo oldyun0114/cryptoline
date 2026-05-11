@@ -1,0 +1,5 @@
+case,exit_status,candidate_pairs,filtered_candidate_pairs,random_input_changed,error_hint
+plain_vs_x86_add,2,,,,Input number mismatch
+plain_vs_x86_mul_mont,2,,,,Input number mismatch
+plain_vs_x86_sqr_mont,2,,,,Input number mismatch
+plain_vs_x86_sub,2,,,,Input number mismatch

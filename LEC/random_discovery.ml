@@ -15,11 +15,11 @@ let make_program_info ~file ~inputs ~spec =
 let check_inputs_compatible p1 p2 =
   let n1 = List.length p1.inputs in
   let n2 = List.length p2.inputs in
-
   if n1 <> n2 then
     failwith
       (Printf.sprintf
-         "Input number mismatch: %s has %d inputs, %s has %d inputs. V0 assumes the same input count."
+         "Input number mismatch: %s has %d inputs, %s has %d inputs.\n\
+          V0 assumes the same input count."
          p1.file n1 p2.file n2);
 
   List.iter2
@@ -29,13 +29,13 @@ let check_inputs_compatible p1 p2 =
       if t1 <> t2 then
         failwith
           (Printf.sprintf
-             "Input type mismatch: %s:%s vs %s:%s. V0 assumes the same input order and type."
+             "Input type mismatch: %s:%s vs %s:%s.\n\
+              V0 assumes the same input order and type."
              (string_of_var v1)
              (string_of_typ t1)
              (string_of_var v2)
              (string_of_typ t2)))
-    p1.inputs
-    p2.inputs
+    p1.inputs p2.inputs
 
 let random_bits_for_var v =
   let z = random_value (typ_of_var v) in
@@ -43,18 +43,22 @@ let random_bits_for_var v =
   let bs = NBits.bits_of_num (Z.to_string z) in
   let extlen = w - List.length bs in
   let bs =
-    if Z.lt z Z.zero then
-      NBits.sext extlen bs
-    else
-      NBits.zext extlen bs
+    if Z.lt z Z.zero then NBits.sext extlen bs
+    else NBits.zext extlen bs
   in
   if List.length bs <> w then
     failwith
       (Printf.sprintf
          "Bit width mismatch when generating random input for %s"
          (string_of_var v))
-  else
-    bs
+  else bs
+
+let input_fingerprint values =
+  values
+  |> List.map NBits.string_of_bits
+  |> String.concat "|"
+  |> Digest.string
+  |> Digest.to_hex
 
 let simulate_once inputs values spec =
   let init_map = Simulator.make_map inputs values in
@@ -64,12 +68,9 @@ let simulate_once inputs values spec =
 
 let get_or_create_signature tbl v =
   let name = string_of_var v in
-  try Hashtbl.find tbl name
-  with Not_found ->
+  try Hashtbl.find tbl name with Not_found ->
     let sigv =
-      HS.create
-        ~name
-        ~typ:(string_of_typ (typ_of_var v))
+      HS.create ~name ~typ:(string_of_typ (typ_of_var v))
     in
     Hashtbl.add tbl name sigv;
     sigv
@@ -82,10 +83,7 @@ let update_signatures_from_map sig_tbl value_map =
     value_map
 
 let signatures_to_list tbl =
-  Hashtbl.fold
-    (fun _ sigv acc -> sigv :: acc)
-    tbl
-    []
+  Hashtbl.fold (fun _ sigv acc -> sigv :: acc) tbl []
 
 let index_by_hash sigs =
   let index = Hashtbl.create 4096 in
@@ -93,8 +91,7 @@ let index_by_hash sigs =
     (fun sigv ->
       let k = HS.key sigv in
       let old =
-        try Hashtbl.find index k
-        with Not_found -> []
+        try Hashtbl.find index k with Not_found -> []
       in
       Hashtbl.replace index k (sigv :: old))
     sigs;
@@ -103,35 +100,110 @@ let index_by_hash sigs =
 let find_matches sigs1 sigs2 =
   let index2 = index_by_hash sigs2 in
   let matches = ref [] in
-
   List.iter
     (fun s1 ->
       let k = HS.key s1 in
       let candidates =
-        try Hashtbl.find index2 k
-        with Not_found -> []
+        try Hashtbl.find index2 k with Not_found -> []
       in
       List.iter
-        (fun s2 ->
-          matches := (s1, s2) :: !matches)
+        (fun s2 -> matches := (s1, s2) :: !matches)
         candidates)
     sigs1;
-
   List.rev !matches
 
-let write_csv filename matches =
+let name_set vars =
+  let tbl = Hashtbl.create 1024 in
+  List.iter
+    (fun v -> Hashtbl.replace tbl (string_of_var v) true)
+    vars;
+  tbl
+
+let in_name_set tbl name =
+  Hashtbl.mem tbl name
+
+let csv_escape s =
+  let need_quote =
+    String.exists
+      (fun c -> c = ',' || c = '"' || c = '\n' || c = '\r')
+      s
+  in
+  if need_quote then
+    "\""
+    ^ String.concat "\"\"" (String.split_on_char '"' s)
+    ^ "\""
+  else s
+
+let count_if pred xs =
+  List.fold_left
+    (fun acc x -> if pred x then acc + 1 else acc)
+    0 xs
+
+let count_signature_groups matches =
+  let tbl = Hashtbl.create 4096 in
+  List.iter
+    (fun (s1, _s2) ->
+      let k = s1.HS.typ ^ ":" ^ HS.hex_hash s1 in
+      Hashtbl.replace tbl k true)
+    matches;
+  Hashtbl.length tbl
+
+
+let is_tiny_flag_type typ =
+  typ = "bit" || typ = "uint1" || typ = "sint1"
+
+let is_input_candidate input_names1 input_names2 (s1, s2) =
+  in_name_set input_names1 s1.HS.name
+  || in_name_set input_names2 s2.HS.name
+
+let is_constant_candidate (s1, s2) =
+  HS.is_constant s1 || HS.is_constant s2
+
+let is_tiny_flag_candidate (s1, s2) =
+  is_tiny_flag_type s1.HS.typ || is_tiny_flag_type s2.HS.typ
+
+let is_basic_meaningful_candidate input_names1 input_names2 (s1, s2) =
+  not (is_constant_candidate (s1, s2))
+  && not (is_input_candidate input_names1 input_names2 (s1, s2))
+  && not (is_tiny_flag_candidate (s1, s2))
+
+let filtered_filename filename =
+  if Filename.check_suffix filename ".csv" then
+    String.sub filename 0 (String.length filename - 4) ^ "_filtered.csv"
+  else
+    filename ^ "_filtered.csv"
+
+let write_csv filename input_names1 input_names2 matches =
   let ch = open_out filename in
-  output_string ch "var_file1,var_file2,type,hash,samples_file1,samples_file2\n";
+  output_string ch
+    "var_file1,var_file2,type,hash,samples_file1,samples_file2,\
+     const_file1,const_file2,input_file1,input_file2,same_name,\
+     first_file1,last_file1,first_file2,last_file2\n";
+
   List.iter
     (fun (s1, s2) ->
-      Printf.fprintf ch "%s,%s,%s,%s,%d,%d\n"
-        s1.HS.name
-        s2.HS.name
-        s1.HS.typ
+      let input1 = in_name_set input_names1 s1.HS.name in
+      let input2 = in_name_set input_names2 s2.HS.name in
+      let same_name = s1.HS.name = s2.HS.name in
+      Printf.fprintf ch
+        "%s,%s,%s,%s,%d,%d,%b,%b,%b,%b,%b,%s,%s,%s,%s\n"
+        (csv_escape s1.HS.name)
+        (csv_escape s2.HS.name)
+        (csv_escape s1.HS.typ)
         (HS.hex_hash s1)
         s1.HS.samples
-        s2.HS.samples)
+        s2.HS.samples
+        (HS.is_constant s1)
+        (HS.is_constant s2)
+        input1
+        input2
+        same_name
+        (csv_escape (HS.first_value_preview s1))
+        (csv_escape (HS.last_value_preview s1))
+        (csv_escape (HS.first_value_preview s2))
+        (csv_escape (HS.last_value_preview s2)))
     matches;
+
   close_out ch
 
 let print_preview matches =
@@ -141,13 +213,54 @@ let print_preview matches =
     (fun i (s1, s2) ->
       if i < max_preview then
         Printf.printf
-          "  [%d] %s  <->  %s    type=%s hash=%s\n"
+          " [%d] %s <-> %s type=%s hash=%s const=(%b,%b)\n"
           i
           s1.HS.name
           s2.HS.name
           s1.HS.typ
-          (HS.hex_hash s1))
+          (HS.hex_hash s1)
+          (HS.is_constant s1)
+          (HS.is_constant s2))
     matches
+
+let print_debug_summary input_names1 input_names2 matches =
+  let both_const =
+    count_if
+      (fun (s1, s2) -> HS.is_constant s1 && HS.is_constant s2)
+      matches
+  in
+  let any_const =
+    count_if
+      (fun (s1, s2) -> HS.is_constant s1 || HS.is_constant s2)
+      matches
+  in
+  let both_non_const =
+    count_if
+      (fun (s1, s2) ->
+        (not (HS.is_constant s1)) && (not (HS.is_constant s2)))
+      matches
+  in
+  let any_input =
+    count_if
+      (fun (s1, s2) ->
+        in_name_set input_names1 s1.HS.name
+        || in_name_set input_names2 s2.HS.name)
+      matches
+  in
+  let same_name =
+    count_if
+      (fun (s1, s2) -> s1.HS.name = s2.HS.name)
+      matches
+  in
+  let groups = count_signature_groups matches in
+
+  Printf.printf "\nDebug classification\n";
+  Printf.printf "Signature groups: %d\n" groups;
+  Printf.printf "Candidate pairs involving any constant-like variable: %d\n" any_const;
+  Printf.printf "Candidate pairs where both sides are constant-like: %d\n" both_const;
+  Printf.printf "Candidate pairs where both sides are non-constant: %d\n" both_non_const;
+  Printf.printf "Candidate pairs involving input variables: %d\n" any_input;
+  Printf.printf "Candidate pairs with same variable name: %d\n" same_name
 
 let run_programs
     ~trials
@@ -170,17 +283,31 @@ let run_programs
 
   let p1 = make_program_info ~file:file1 ~inputs:inputs1 ~spec:spec1 in
   let p2 = make_program_info ~file:file2 ~inputs:inputs2 ~spec:spec2 in
-
   check_inputs_compatible p1 p2;
 
   let sig_tbl1 = Hashtbl.create 4096 in
   let sig_tbl2 = Hashtbl.create 4096 in
 
+  let first_input_fp = ref None in
+  let last_input_fp = ref None in
+  let input_changed = ref false in
+
   for i = 1 to trials do
     if i = 1 || i mod 100 = 0 || i = trials then
-      Printf.printf "  trial %d / %d\n%!" i trials;
+      Printf.printf " trial %d / %d\n%!" i trials;
 
     let values = List.map random_bits_for_var p1.inputs in
+    let fp = input_fingerprint values in
+
+    begin
+      match !first_input_fp with
+      | None ->
+          first_input_fp := Some fp;
+          last_input_fp := Some fp
+      | Some first ->
+          if fp <> first then input_changed := true;
+          last_input_fp := Some fp
+    end;
 
     let final_map1 = simulate_once p1.inputs values p1.spec in
     let final_map2 = simulate_once p2.inputs values p2.spec in
@@ -193,16 +320,46 @@ let run_programs
   let sigs2 = signatures_to_list sig_tbl2 in
   let matches = find_matches sigs1 sigs2 in
 
+  let input_names1 = name_set p1.inputs in
+  let input_names2 = name_set p2.inputs in
+
+  let filtered_matches =
+    List.filter
+      (is_basic_meaningful_candidate input_names1 input_names2)
+      matches
+  in
+
   Printf.printf "\nSummary\n";
   Printf.printf "Program 1 variables with signatures: %d\n" (List.length sigs1);
   Printf.printf "Program 2 variables with signatures: %d\n" (List.length sigs2);
   Printf.printf "Candidate equal variable pairs: %d\n" (List.length matches);
+  Printf.printf "Filtered candidate equal variable pairs: %d\n"
+    (List.length filtered_matches);
 
-  print_preview matches;
+  Printf.printf "\nRandom input debug\n";
+  Printf.printf "First input fingerprint: %s\n"
+    (match !first_input_fp with None -> "none" | Some x -> x);
+  Printf.printf "Last input fingerprint: %s\n"
+    (match !last_input_fp with None -> "none" | Some x -> x);
+  Printf.printf "Random input changed across trials: %b\n" !input_changed;
 
-  begin match out_csv with
-  | None -> ()
-  | Some filename ->
-      write_csv filename matches;
-      Printf.printf "\nCSV written to: %s\n" filename
+  print_debug_summary input_names1 input_names2 matches;
+
+  Printf.printf "\nFiltered debug classification\n";
+  Printf.printf "Filtered signature groups: %d\n"
+    (count_signature_groups filtered_matches);
+  Printf.printf "Filtered candidate pairs: %d\n"
+    (List.length filtered_matches);
+
+  print_preview filtered_matches;
+
+  begin
+    match out_csv with
+    | None -> ()
+    | Some filename ->
+        let filtered = filtered_filename filename in
+        write_csv filename input_names1 input_names2 matches;
+        write_csv filtered input_names1 input_names2 filtered_matches;
+        Printf.printf "\nRaw CSV written to: %s\n" filename;
+        Printf.printf "Filtered CSV written to: %s\n" filtered
   end

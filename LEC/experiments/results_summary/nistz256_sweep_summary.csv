@@ -1,0 +1,5 @@
+case,exit_status,candidate_pairs,filtered_candidate_pairs,random_input_changed,error_hint
+nistz256_add_armv8_x86,2,,,,Input number mismatch
+nistz256_mul_mont_armv8_x86,2,,,,Input number mismatch
+nistz256_sqr_mont_armv8_x86,2,,,,Input number mismatch
+nistz256_sub_armv8_x86,2,,,,Input number mismatch
