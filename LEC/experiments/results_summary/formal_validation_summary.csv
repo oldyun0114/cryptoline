@@ -1,0 +1,11 @@
+file,total,ok,timeout,failed,avg_seconds,max_seconds
+keccak_top5_validation.csv,5,0,0,5,1.15,1.26
+keccak_top5_validation_timeout300.csv,5,5,0,0,62.35,74.49
+keccak_top5_validation_timeout60.csv,5,1,4,0,59.98,60.83
+keccak_top5_validation_with_abc.csv,5,5,0,0,35.51,36.49
+x25519_add_top5_validation_timeout60.csv,5,5,0,0,0.09,0.10
+x25519_add_top5_validation_with_abc.csv,5,5,0,0,0.10,0.12
+x25519_mul_top5_validation_timeout60.csv,5,1,4,0,48.38,60.88
+x25519_sqr_top5_validation_timeout60.csv,5,1,4,0,48.17,60.64
+x25519_sub_top5_validation_timeout60.csv,5,5,0,0,0.14,0.23
+x25519_sub_top5_validation_with_abc.csv,5,5,0,0,0.08,0.13

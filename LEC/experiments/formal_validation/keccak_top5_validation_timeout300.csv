@@ -1,0 +1,6 @@
+rank,group_id,var_file1,var_file2,type,score,returncode,ok,seconds,log
+1,1,v_shr_3_1_i,r12_h,uint64,155.00,0,true,41.49,LEC/experiments/formal_validation/keccak_top5_validation_timeout300.csv.logs/001_v_shr_3_1_i_VS_r12_h.log
+2,4,v_shr_2_1_i,r14_h,uint64,155.00,0,true,71.45,LEC/experiments/formal_validation/keccak_top5_validation_timeout300.csv.logs/002_v_shr_2_1_i_VS_r14_h.log
+3,10,v_shl_2_4_i,rdi_s,uint64,155.00,0,true,71.27,LEC/experiments/formal_validation/keccak_top5_validation_timeout300.csv.logs/003_v_shl_2_4_i_VS_rdi_s.log
+4,11,v_shr_1_3_i,rax_h,uint64,155.00,0,true,74.49,LEC/experiments/formal_validation/keccak_top5_validation_timeout300.csv.logs/004_v_shr_1_3_i_VS_rax_h.log
+5,13,v_shr_2_4_i,rdi_h,uint64,155.00,0,true,53.05,LEC/experiments/formal_validation/keccak_top5_validation_timeout300.csv.logs/005_v_shr_2_4_i_VS_rdi_h.log

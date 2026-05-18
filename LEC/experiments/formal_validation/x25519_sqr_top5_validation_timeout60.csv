@@ -1,0 +1,6 @@
+rank,group_id,var_file1,var_file2,type,score,returncode,ok,seconds,log
+1,0,x1,r14,uint64,158.00,124,false,60.06,LEC/experiments/formal_validation/x25519_sqr_top5_validation_timeout60.csv.logs/001_x1_VS_r14.log
+2,8,x17,r13,uint64,156.67,124,false,60.64,LEC/experiments/formal_validation/x25519_sqr_top5_validation_timeout60.csv.logs/002_x17_VS_r13.log
+3,12,x8_x2,r12,uint64,155.00,124,false,60.06,LEC/experiments/formal_validation/x25519_sqr_top5_validation_timeout60.csv.logs/003_x8_x2_VS_r12.log
+4,10,x2,r15,uint64,150.00,124,false,60.03,LEC/experiments/formal_validation/x25519_sqr_top5_validation_timeout60.csv.logs/004_x2_VS_r15.log
+5,11,L0x420020,L0x7fffffffdb60,uint64,140.67,0,true,0.07,LEC/experiments/formal_validation/x25519_sqr_top5_validation_timeout60.csv.logs/005_L0x420020_VS_L0x7fffffffdb60.log
