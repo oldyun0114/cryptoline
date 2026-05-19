@@ -1,6 +1,7 @@
 val run_programs :
   trials:int ->
   out_csv:string option ->
+  input_map:string option ->
   file1:string ->
   inputs1:Ast.Cryptoline.var list ->
   spec1:Ast.Cryptoline.spec ->

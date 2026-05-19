@@ -37,7 +37,7 @@ let kissat_path = ref "kissat"
 
 let lec_discover = ref false
 let lec_trials = ref 100
-let lec_out_csv = ref None
+let lec_out_csv = ref None let lec_input_map = ref None
 
 
 (** Parsing arguments *)
@@ -100,7 +100,12 @@ let args_spec =
      "FILE";
      "Write candidate equal variable pairs to CSV."
    ]))
-] @Common.args_parsing@Common.args_io
+; ("-lec-input-map",
+String (fun str -> lec_input_map := Some str),
+Common.mk_arg_desc([
+"FILE|auto";
+"Use mapped random inputs for -lec-discover."
+]))] @Common.args_parsing@Common.args_io
 let args_spec = List.sort Stdlib.compare args_spec
 
 let usage_msg =
@@ -483,6 +488,7 @@ let run () =
         Lec.Random_discovery.run_programs
           ~trials:!lec_trials
           ~out_csv:!lec_out_csv
+          ~input_map:!lec_input_map
           ~file1
           ~inputs1
           ~spec1
